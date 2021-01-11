@@ -21,9 +21,14 @@ class ElementAttribute{
 
 class Component {
 
-    constructor(renderHookId){
+    constructor(renderHookId, shouldRender = true){
         this.hookId = renderHookId;
+        if(shouldRender){
+            this.render();
+        }
     }
+
+    render(){}
 
     createRootElement(tag, className, attributes) {
         const rootElement = document.createElement(tag);
@@ -42,8 +47,9 @@ class Component {
 
 class ProductItem extends Component{
     constructor(hookId, product){
-        super(hookId);
+        super(hookId,false);
         this.product = product;
+        this.render();
     }
 
     addtoCart(){
@@ -93,6 +99,11 @@ class Cart extends Component{
         this.cartItems = updatedItems;
     }
 
+    orderProducts(){
+        console.log('Ordering...');
+        console.log(this.items);
+    }
+
     render(){
         const sectionEl = this.createRootElement('section', 'cart');
         sectionEl.innerHTML = `
@@ -100,15 +111,22 @@ class Cart extends Component{
             <button>Order Now</button>
         `;
         this.totlalOutput = sectionEl.querySelector('h2');
+        const orderButton = sectionEl.querySelector('button');
+        orderButton.addEventListener('click', () => this.orderProducts())
     }
 }
 
 class ProductList extends Component{
     constructor(hookId){
-        super(hookId);
+        super(hookId, false);
+        this.render();
+        this.#fetchProducts();
     }
-    products = [
-        new Product(
+    #products = []; //A private property
+
+    #fetchProducts(){ //A private method
+        this.#products = [
+            new Product(
             'A pillow', 
             'https://i1.adis.ws/i/dreams/719-00201_main-shot_01_therapur-cool-pillow', 
             'A soft pillow', 
@@ -119,27 +137,34 @@ class ProductList extends Component{
             'https://eurstockhub.com/wp-content/uploads/2020/11/c-2.jpg', 
             'A carpet which you might like, or not', 
             89.99
-        )
-    ];
+        )];
+
+        this.renderProducts();
+    }
+
+    renderProducts(){
+        for(const prod of this.#products){
+            const productItem = new ProductItem('prod-list' ,prod);
+        }
+    }
 
     render(){
         this.createRootElement('ul', 'product-list', [new ElementAttribute('id', 'prod-list')]);
-
-        for(const prod of this.products){
-            const productItem = new ProductItem('prod-list' ,prod);
-            productItem.render();
+        if (this.#products && this.#products.length > 0){
+            this.renderProducts();
         }
+        
     }
 }
 
-class Shop{
+class Shop {
 
+    constructor(){
+        this.render();
+    }
     render(){
-
         this.cart = new Cart('app');
-        this.cart.render();
-        const productList = new ProductList('app');
-        productList.render();
+        new ProductList('app');
     } 
 }
 
@@ -148,7 +173,6 @@ class App{
 
     static init(){
         const shop = new Shop();
-        shop.render();
         this.cart = shop.cart;
     }
 
